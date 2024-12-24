@@ -1,7 +1,7 @@
 function [correctedImg, a, b] =  exp_image_enhancement(img)
     % 设置指数校正参数
-    a = 2; % 缩放因子
-    b = 1.5; % 指数因子
+    a = 0.8; % 缩放因子
+    b = 1.0; % 指数因子
     
     % 将图像转换为双精度浮点数以进行计算
     A1 = double(img);
