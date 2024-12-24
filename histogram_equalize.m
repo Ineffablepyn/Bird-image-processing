@@ -1,27 +1,48 @@
 function [equalized_image, equalized_hist] = histogram_equalize(input_image)
-    % 检查输入图像的灰度值范围
-    if max(input_image(:)) > 1 || min(input_image(:)) < 0
-        error('输入图像的灰度值必须在0到1之间');
+    if size(input_image, 3) == 3
+        input_image = (0.2989 * input_image(:,:,1) + 0.5870 * input_image(:,:,2) + 0.1140 * input_image(:,:,3));
+    end
+  
+    img = im2double(input_image); 
+    img_out = zeros(size(img));
+    [m, n] = size(img);
+    
+    % 计算直方图
+    h = zeros(1, 256); % 初始化直方图
+    for i = 1:m
+        for j = 1:n
+            gray_value = round(img(i,j) * 255) + 1; 
+            h(gray_value) = h(gray_value) + 1; % 统计每个灰度值的出现次数
+        end
+    end
+    h = h / (m * n); 
+    s = zeros(1, 256); % 创建输出灰度值向量
+    rk = 0.0; 
+    
+    % 计算累计分布函数并映射到新的灰度值
+    for i = 1:length(h)
+        rk = rk + h(i);
+        s(i) = round(rk * 255); 
     end
     
-    % 将图像值调整到256个级别
-    num_levels = 256; % 定义级别数
-    input_image = round(input_image * (num_levels - 1)); % 变换到0-255的范围
+    % 应用直方图均衡化
+    for i = 1:m
+        for j = 1:n
+            gray_value = round(img(i,j) * 255) + 1; % 获取灰度值并调整索引
+            img_out(i,j) = s(gray_value) / 255; % 映射到0到1范围
+        end
+    end
     
-    % 计算原始直方图
-    total_pixels = numel(input_image);
-    original_hist = histcounts(input_image, 0:num_levels); % 计算直方图，区间[0,256]
     
-    % 计算累积概率
-    prob = original_hist / total_pixels;
-    cumulative_prob = cumsum(prob);
-    
-    % 计算新的灰度级，并将其归一化到[0, 1]
-    new_levels = round(cumulative_prob * (num_levels - 1)); % 变换到0-255的范围
-    
-    % 创建新图像
-    equalized_image = new_levels(input_image + 1) / (num_levels - 1); % 使用new_levels映射
+    equalized_image = img_out;
+    equalized_hist = zeros(1, 256); 
     
     % 计算均衡化后的直方图
-    equalized_hist = histcounts(equalized_image * (num_levels - 1), 0:num_levels); % 计算均衡化后的直方图
+    for i = 1:m
+        for j = 1:n
+            gray_value = round(equalized_image(i,j) * 255) + 1; 
+            equalized_hist(gray_value) = equalized_hist(gray_value) + 1;
+        end
+    end
+    equalized_hist = equalized_hist / (m * n); 
 end
